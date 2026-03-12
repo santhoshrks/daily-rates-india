@@ -6,8 +6,15 @@ class AppTheme {
 
   // ── Palette ──────────────────────────────────────────────
   static const Color _seed = Colors.orange;
-  static const Color _lightSurface = Color(0xFFFFF8F0);
-  static const Color _darkSurface = Color(0xFF1A1A1A);
+  static const Color _lightSurface = Color(0xFFF5F5F7);
+  static const Color _darkSurface = Color(0xFF121212);
+
+  // ── Gradients ────────────────────────────────────────────
+  static const LinearGradient appBarGradient = LinearGradient(
+    colors: [Color(0xFFE65100), Color(0xFFFF8F00)],
+    begin: Alignment.topLeft,
+    end: Alignment.bottomRight,
+  );
 
   // ── Light Theme ──────────────────────────────────────────
   static ThemeData get light {
@@ -20,31 +27,50 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: _lightSurface,
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
-        scrolledUnderElevation: 2,
-        backgroundColor: colorScheme.primary,
-        foregroundColor: colorScheme.onPrimary,
-        titleTextStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.4,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        titleTextStyle: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+          color: Colors.white,
         ),
       ),
       cardTheme: CardThemeData(
         color: Colors.white,
-        elevation: 2,
-        shadowColor: Colors.black12,
+        elevation: 0,
+        shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
+          side: BorderSide(color: Colors.grey.shade200, width: 1),
         ),
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: Colors.white,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: BorderSide(color: Colors.grey.shade200),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFE65100), width: 2),
+        ),
+      ),
       textTheme: const TextTheme(
-        headlineSmall: TextStyle(fontWeight: FontWeight.w800, fontSize: 22),
-        titleMedium: TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        headlineSmall: TextStyle(fontWeight: FontWeight.w800, fontSize: 24),
+        titleMedium: TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+        titleSmall: TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
         bodySmall: TextStyle(fontSize: 12, color: Colors.grey),
       ),
     );
@@ -61,31 +87,50 @@ class AppTheme {
       useMaterial3: true,
       colorScheme: colorScheme,
       scaffoldBackgroundColor: _darkSurface,
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         centerTitle: true,
         elevation: 0,
-        scrolledUnderElevation: 2,
-        backgroundColor: colorScheme.surface,
-        foregroundColor: colorScheme.onSurface,
-        titleTextStyle: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0.4,
+        scrolledUnderElevation: 0,
+        backgroundColor: Colors.transparent,
+        foregroundColor: Colors.white,
+        titleTextStyle: TextStyle(
+          fontSize: 22,
+          fontWeight: FontWeight.w800,
+          letterSpacing: 0.5,
+          color: Colors.white,
         ),
       ),
       cardTheme: CardThemeData(
-        color: const Color(0xFF2A2A2A),
-        elevation: 2,
-        shadowColor: Colors.black26,
+        color: const Color(0xFF1E1E1E),
+        elevation: 0,
+        shadowColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(18),
+          side: const BorderSide(color: Color(0xFF2E2E2E), width: 1),
         ),
         margin: EdgeInsets.zero,
         clipBehavior: Clip.antiAlias,
       ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: const Color(0xFF1E1E1E),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF2E2E2E)),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFF2E2E2E)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(14),
+          borderSide: const BorderSide(color: Color(0xFFFF8F00), width: 2),
+        ),
+      ),
       textTheme: TextTheme(
-        headlineSmall: const TextStyle(fontWeight: FontWeight.w800, fontSize: 22),
-        titleMedium: const TextStyle(fontWeight: FontWeight.w600, fontSize: 16),
+        headlineSmall: const TextStyle(fontWeight: FontWeight.w800, fontSize: 24),
+        titleMedium: const TextStyle(fontWeight: FontWeight.w600, fontSize: 15),
+        titleSmall: const TextStyle(fontWeight: FontWeight.w500, fontSize: 12),
         bodySmall: TextStyle(fontSize: 12, color: Colors.grey.shade500),
       ),
     );

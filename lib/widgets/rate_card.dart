@@ -4,9 +4,6 @@ import 'package:intl/intl.dart';
 import '../models/rate_model.dart';
 
 /// A polished dashboard card that displays a single [RateModel].
-///
-/// Features: category-colored icon, price change indicator (▲/▼),
-/// hover scale animation, and responsive typography.
 class RateCard extends StatefulWidget {
   const RateCard({super.key, required this.rate});
 
@@ -23,47 +20,114 @@ class _RateCardState extends State<RateCard> {
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final rate = widget.rate;
-    final timeStr = DateFormat('hh:mm a, dd MMM yyyy').format(rate.updatedAt);
+    final timeStr = DateFormat('hh:mm a, dd MMM').format(rate.updatedAt);
+    final category = _getCategory(rate.title);
 
     return MouseRegion(
+      cursor: SystemMouseCursors.click,
       onEnter: (_) => setState(() => _hovering = true),
       onExit: (_) => setState(() => _hovering = false),
       child: AnimatedScale(
-        scale: _hovering ? 1.03 : 1.0,
-        duration: const Duration(milliseconds: 200),
-        curve: Curves.easeOut,
-        child: Card(
-          elevation: _hovering ? 8 : 2,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        scale: _hovering ? 1.04 : 1.0,
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutCubic,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: _hovering
+                ? [
+                    BoxShadow(
+                      color: rate.iconFgColor.withValues(alpha: 0.2),
+                      blurRadius: 20,
+                      offset: const Offset(0, 8),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Card(
+            child: Stack(
               children: [
-                // ── Icon with category color ───────────────
-                Container(
-                  decoration: BoxDecoration(
-                    color: rate.iconBgColor,
-                    borderRadius: BorderRadius.circular(14),
+                // ── Accent top bar ──────────────────────
+                Positioned(
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  child: Container(
+                    height: 4,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          rate.iconFgColor,
+                          rate.iconFgColor.withValues(alpha: 0.4),
+                        ],
+                      ),
+                      borderRadius: const BorderRadius.only(
+                        topLeft: Radius.circular(18),
+                        topRight: Radius.circular(18),
+                      ),
+                    ),
                   ),
-                  padding: const EdgeInsets.all(12),
-                  child: Icon(rate.icon, size: 28, color: rate.iconFgColor),
                 ),
-                const SizedBox(height: 16),
 
-                // ── Title ──────────────────────────────────
-                Text(
-                  rate.title,
-                  style: theme.textTheme.titleMedium,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                const Spacer(),
+                // ── Card content ────────────────────────
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      // ── Icon + Category row ──────────────
+                      Row(
+                        children: [
+                          Container(
+                            decoration: BoxDecoration(
+                              color: rate.iconBgColor,
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            padding: const EdgeInsets.all(10),
+                            child: Icon(rate.icon, size: 22, color: rate.iconFgColor),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  rate.title,
+                                  style: theme.textTheme.titleMedium,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 2,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: rate.iconBgColor,
+                                    borderRadius: BorderRadius.circular(6),
+                                  ),
+                                  child: Text(
+                                    category,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                      color: rate.iconFgColor,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          _ChangeChip(change: rate.change),
+                        ],
+                      ),
 
-                // ── Price + change indicator ───────────────
-                Row(
-                  children: [
-                    Expanded(
-                      child: FittedBox(
+                      const Spacer(),
+
+                      // ── Price ─────────────────────────────
+                      FittedBox(
                         fit: BoxFit.scaleDown,
                         alignment: Alignment.centerLeft,
                         child: Text(
@@ -71,32 +135,34 @@ class _RateCardState extends State<RateCard> {
                               ? '${rate.prefix} ${rate.value}'
                               : rate.value,
                           style: theme.textTheme.headlineSmall?.copyWith(
-                            color: theme.colorScheme.primary,
+                            color: rate.iconFgColor,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.5,
                           ),
                         ),
                       ),
-                    ),
-                    const SizedBox(width: 6),
-                    _ChangeChip(change: rate.change),
-                  ],
-                ),
-                const SizedBox(height: 8),
+                      const SizedBox(height: 8),
 
-                // ── Timestamp ──────────────────────────────
-                Row(
-                  children: [
-                    Icon(Icons.access_time_rounded,
-                        size: 14, color: Colors.grey.shade500),
-                    const SizedBox(width: 4),
-                    Expanded(
-                      child: Text(
-                        timeStr,
-                        style: theme.textTheme.bodySmall,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      // ── Timestamp ─────────────────────────
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: BoxDecoration(
+                              color: Colors.green.shade400,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Live  •  $timeStr',
+                            style: theme.textTheme.bodySmall?.copyWith(fontSize: 11),
+                          ),
+                        ],
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -104,6 +170,16 @@ class _RateCardState extends State<RateCard> {
         ),
       ),
     );
+  }
+
+  String _getCategory(String title) {
+    final t = title.toLowerCase();
+    if (t.contains('gold') || t.contains('silver')) return 'METALS';
+    if (t.contains('petrol') || t.contains('diesel')) return 'FUEL';
+    if (t.contains('usd') || t.contains('eur')) return 'FOREX';
+    if (t.contains('bitcoin')) return 'CRYPTO';
+    if (t.contains('nifty')) return 'INDEX';
+    return 'MARKET';
   }
 }
 
@@ -116,25 +192,46 @@ class _ChangeChip extends StatelessWidget {
   Widget build(BuildContext context) {
     IconData icon;
     Color color;
+    String label;
     switch (change) {
       case PriceChange.up:
-        icon = Icons.arrow_drop_up_rounded;
+        icon = Icons.trending_up_rounded;
         color = const Color(0xFF2E7D32);
+        label = 'UP';
       case PriceChange.down:
-        icon = Icons.arrow_drop_down_rounded;
+        icon = Icons.trending_down_rounded;
         color = const Color(0xFFC62828);
+        label = 'DOWN';
       case PriceChange.unchanged:
         icon = Icons.remove_rounded;
         color = Colors.grey;
+        label = '—';
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
-      child: Icon(icon, color: color, size: 22),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 14),
+          if (change != PriceChange.unchanged) ...[
+            const SizedBox(width: 2),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontSize: 10,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ],
+        ],
+      ),
     );
   }
 }

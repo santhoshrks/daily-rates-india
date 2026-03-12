@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Skeleton / shimmer-style loading placeholder card shown while data
-/// is being fetched.
+/// Skeleton / shimmer-style loading placeholder card.
 class LoadingCard extends StatefulWidget {
   const LoadingCard({super.key});
 
@@ -19,9 +18,9 @@ class _LoadingCardState extends State<LoadingCard>
     super.initState();
     _ctrl = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 1000),
+      duration: const Duration(milliseconds: 1200),
     )..repeat(reverse: true);
-    _opacity = Tween<double>(begin: 0.3, end: 0.8).animate(
+    _opacity = Tween<double>(begin: 0.3, end: 0.7).animate(
       CurvedAnimation(parent: _ctrl, curve: Curves.easeInOut),
     );
   }
@@ -35,31 +34,64 @@ class _LoadingCardState extends State<LoadingCard>
   @override
   Widget build(BuildContext context) {
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
-        child: AnimatedBuilder(
-          animation: _opacity,
-          builder: (context, _) {
-            return Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _Bone(width: 52, height: 52, radius: 14, opacity: _opacity.value),
-                const SizedBox(height: 16),
-                _Bone(width: 100, height: 16, opacity: _opacity.value),
-                const Spacer(),
-                _Bone(width: 140, height: 24, opacity: _opacity.value),
-                const SizedBox(height: 10),
-                _Bone(width: 170, height: 12, opacity: _opacity.value),
-              ],
-            );
-          },
-        ),
+      child: Stack(
+        children: [
+          // Accent bar skeleton
+          Positioned(
+            top: 0, left: 0, right: 0,
+            child: Container(
+              height: 4,
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(18),
+                  topRight: Radius.circular(18),
+                ),
+              ),
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 16),
+            child: AnimatedBuilder(
+              animation: _opacity,
+              builder: (context, _) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Icon + title row
+                    Row(
+                      children: [
+                        _Bone(width: 42, height: 42, radius: 12, opacity: _opacity.value),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _Bone(width: 90, height: 14, opacity: _opacity.value),
+                              const SizedBox(height: 6),
+                              _Bone(width: 50, height: 10, opacity: _opacity.value),
+                            ],
+                          ),
+                        ),
+                        _Bone(width: 40, height: 22, radius: 8, opacity: _opacity.value),
+                      ],
+                    ),
+                    const Spacer(),
+                    _Bone(width: 140, height: 22, opacity: _opacity.value),
+                    const SizedBox(height: 10),
+                    _Bone(width: 100, height: 10, opacity: _opacity.value),
+                  ],
+                );
+              },
+            ),
+          ),
+        ],
       ),
     );
   }
 }
 
-/// Renamed AnimatedBuilder alias to keep code clean.
+/// AnimatedBuilder wrapper.
 class AnimatedBuilder extends AnimatedWidget {
   const AnimatedBuilder({
     super.key,
@@ -88,14 +120,15 @@ class _Bone extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       width: width,
       height: height,
       decoration: BoxDecoration(
-        color: Colors.grey.shade300.withValues(alpha: opacity),
+        color: (isDark ? Colors.grey.shade700 : Colors.grey.shade200)
+            .withValues(alpha: opacity),
         borderRadius: BorderRadius.circular(radius),
       ),
     );
   }
 }
-

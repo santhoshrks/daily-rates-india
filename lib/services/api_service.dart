@@ -54,7 +54,7 @@ class ApiService {
     return _cache[key] ??
         RateModel(
           title: 'Gold Rate',
-          value: '72,450 / 10 g',
+          value: '160,000 / 10 g',
           updatedAt: DateTime.now(),
           icon: Icons.monetization_on_rounded,
           iconBgColor: const Color(0xFFFFF8E1),
