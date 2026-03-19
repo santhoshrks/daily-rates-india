@@ -1,0 +1,5 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://santhoshrks.github.io/daily-rates-india/sitemap.xml
+
