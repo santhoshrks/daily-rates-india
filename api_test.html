@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gold API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border-left: 4px solid #4CAF50;
+            background-color: #f9f9f9;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .output {
+            background-color: #f0f0f0;
+            padding: 15px;
+            border-radius: 4px;
+            margin-top: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            font-family: monospace;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            border: 1px solid #ddd;
+        }
+        .success {
+            color: #4CAF50;
+            font-weight: bold;
+        }
+        .error {
+            color: #f44336;
+            font-weight: bold;
+        }
+        .info {
+            color: #2196F3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔍 Gold API Diagnostic Test</h1>
+
+        <div class="test-section">
+            <h2>Test 1: metals.live API</h2>
+            <button onclick="testMetalsLive()">Test metals.live API</button>
+            <div id="result1" class="output" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 2: CoinGecko Gold API</h2>
+            <button onclick="testCoinGecko()">Test CoinGecko API</button>
+            <div id="result2" class="output" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 3: Open Exchange Rates (USD to INR)</h2>
+            <button onclick="testExchangeRate()">Test Exchange Rate API</button>
+            <div id="result3" class="output" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 4: Calculate Gold Price</h2>
+            <button onclick="calculateGoldPrice()">Calculate Price (Metals.live + Exchange)</button>
+            <div id="result4" class="output" style="display:none;"></div>
+        </div>
+
+        <div class="test-section">
+            <h2>Test 5: Show Console Logs</h2>
+            <button onclick="showConsoleLogs()">Show Recent Logs</button>
+            <div id="result5" class="output" style="display:none;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Store logs
+        let consoleLogs = [];
+
+        // Override console.log to capture logs
+        const originalLog = console.log;
+        console.log = function(...args) {
+            consoleLogs.push(args.join(' '));
+            originalLog.apply(console, args);
+        };
+
+        function showResult(elementId, data, isError = false) {
+            const element = document.getElementById(elementId);
+            element.innerHTML = `<span class="${isError ? 'error' : 'success'}">Response:</span>\n${JSON.stringify(data, null, 2)}`;
+            element.style.display = 'block';
+        }
+
+        function testMetalsLive() {
+            const resultDiv = document.getElementById('result1');
+            resultDiv.innerHTML = '<span class="info">Testing...</span>';
+            resultDiv.style.display = 'block';
+
+            fetch('https://api.metals.live/v1/spot/gold')
+                .then(response => {
+                    console.log('Metals.live Response Status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Metals.live Data:', data);
+                    showResult('result1', data);
+                })
+                .catch(error => {
+                    console.error('Metals.live Error:', error.message);
+                    showResult('result1', { error: error.message, type: 'CORS or Network Error' }, true);
+                });
+        }
+
+        function testCoinGecko() {
+            const resultDiv = document.getElementById('result2');
+            resultDiv.innerHTML = '<span class="info">Testing...</span>';
+            resultDiv.style.display = 'block';
+
+            fetch('https://api.coingecko.com/api/v3/simple/price?ids=gold&vs_currencies=inr')
+                .then(response => {
+                    console.log('CoinGecko Response Status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('CoinGecko Data:', data);
+                    showResult('result2', data);
+                })
+                .catch(error => {
+                    console.error('CoinGecko Error:', error.message);
+                    showResult('result2', { error: error.message }, true);
+                });
+        }
+
+        function testExchangeRate() {
+            const resultDiv = document.getElementById('result3');
+            resultDiv.innerHTML = '<span class="info">Testing...</span>';
+            resultDiv.style.display = 'block';
+
+            fetch('https://open.er-api.com/v6/latest/USD')
+                .then(response => {
+                    console.log('Exchange Rate Response Status:', response.status);
+                    return response.json();
+                })
+                .then(data => {
+                    console.log('Exchange Rate Data:', data);
+                    if (data.rates && data.rates.INR) {
+                        showResult('result3', { USD_to_INR: data.rates.INR, timestamp: data.time_last_updated });
+                    } else {
+                        showResult('result3', data);
+                    }
+                })
+                .catch(error => {
+                    console.error('Exchange Rate Error:', error.message);
+                    showResult('result3', { error: error.message }, true);
+                });
+        }
+
+        async function calculateGoldPrice() {
+            const resultDiv = document.getElementById('result4');
+            resultDiv.innerHTML = '<span class="info">Calculating...</span>';
+            resultDiv.style.display = 'block';
+
+            try {
+                // Get gold price
+                const goldRes = await fetch('https://api.metals.live/v1/spot/gold');
+                const goldData = await goldRes.json();
+                const usdPerOz = goldData[0].gold;
+                console.log('Gold USD per oz:', usdPerOz);
+
+                // Get exchange rate
+                const exchangeRes = await fetch('https://open.er-api.com/v6/latest/USD');
+                const exchangeData = await exchangeRes.json();
+                const inrExchange = exchangeData.rates.INR;
+                console.log('Exchange Rate USD to INR:', inrExchange);
+
+                // Calculate
+                const troyOunceInGrams = 31.1035;
+                const inrPer10g = (usdPerOz * inrExchange * 10) / troyOunceInGrams;
+
+                console.log('Calculated Price per 10g:', inrPer10g);
+
+                const result = {
+                    goldUsdPerOz: usdPerOz,
+                    exchangeRateUsdToInr: inrExchange,
+                    calculatedInrPer10g: Math.round(inrPer10g),
+                    formula: `(${usdPerOz} × ${inrExchange} × 10) / ${troyOunceInGrams}`
+                };
+
+                showResult('result4', result);
+            } catch (error) {
+                console.error('Calculation Error:', error.message);
+                showResult('result4', { error: error.message }, true);
+            }
+        }
+
+        function showConsoleLogs() {
+            const resultDiv = document.getElementById('result5');
+            resultDiv.innerHTML = consoleLogs.length > 0 ? consoleLogs.join('\n') : 'No logs captured yet. Check the browser console (F12).';
+            resultDiv.style.display = 'block';
+        }
+
+        // Also log any errors
+        window.addEventListener('error', (event) => {
+            console.error('Global Error:', event.message);
+        });
+    </script>
+</body>
+</html>
+

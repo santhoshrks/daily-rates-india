@@ -1,0 +1,75 @@
+# 🎯 QUICK REFERENCE - CONSOLE CHECK
+
+## 3 SIMPLE STEPS
+
+### Step 1: Open Website
+```
+https://santhoshrks.github.io/daily-rates-india/
+```
+
+### Step 2: Press F12
+```
+Your keyboard → Press F12 → Console panel opens
+```
+
+### Step 3: Refresh Page
+```
+Press F5 → Look at console messages → Tell me what you see
+```
+
+---
+
+## What You'll See (One of These)
+
+### ✅ GOOD - Real Price Showing
+```
+🔍 Gold API (metals.live) Response Status: 200
+✅ Gold Price from metals.live: ₹175,000 (USD $65.5 per oz)
+```
+Website shows: **Real gold price** ✓
+
+---
+
+### 🟡 OKAY - Backup API Working
+```
+⚠️ Primary Gold API Error: Failed to fetch
+🔍 Gold API (CoinGecko) Response Status: 200
+✅ Gold Price from CoinGecko: ₹175,000 / g
+```
+Website shows: **Real gold price** ✓
+
+---
+
+### 🔴 BAD - Using Fallback
+```
+⚠️ Primary Gold API Error: Failed to fetch
+⚠️ Backup Gold API Error: Failed to fetch
+❌ Both Gold APIs failed - Using Fallback: 160,000 / 10 g
+```
+Website shows: **160,000 (fallback only)** ✗
+
+---
+
+## Tell Me Exactly
+
+When you open console and refresh, reply with:
+
+🟢 **"I see ✅ messages"** = APIs working, real prices showing
+🟡 **"I see ⚠️ messages"** = One API failed, backup working
+🔴 **"I see ❌ message"** = Both APIs failed, showing fallback
+
+---
+
+## Browser Shortcuts
+
+| Browser | Console Shortcut |
+|---------|-----------------|
+| Chrome | F12 or Ctrl+Shift+I |
+| Safari | Cmd+Option+I |
+| Firefox | F12 or Ctrl+Shift+K |
+| Edge | F12 |
+
+---
+
+**Do this NOW and tell me what you see!** 👇
+

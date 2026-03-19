@@ -27,15 +27,60 @@ class ApiService {
   Future<RateModel> getGoldPrice() async {
     const key = 'gold';
     final prev = _cache[key]?.numericValue;
+
+    // Try CoinGecko first (most reliable, no SSL/CORS issues)
     try {
       final uri = Uri.parse(AppConstants.goldApiUrl);
+      print('🔍 Trying CoinGecko API: $uri');
+
       final res = await _client.get(uri).timeout(AppConstants.httpTimeout);
+      print('📊 CoinGecko Response: ${res.statusCode}');
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body) as Map<String, dynamic>;
+        // CoinGecko format: {"gold": {"inr": 7500000}}
+        if (decoded.containsKey('gold') && decoded['gold'] is Map) {
+          final goldData = decoded['gold'] as Map<String, dynamic>;
+          if (goldData.containsKey('inr')) {
+            final inrPrice = (goldData['inr'] as num).toDouble();
+
+            print('✅ SUCCESS from CoinGecko: ₹${_formatINR(inrPrice)} per gram');
+
+            final model = RateModel(
+              title: 'Gold Rate',
+              value: '${_formatINR(inrPrice)} / g',
+              updatedAt: DateTime.now(),
+              icon: Icons.monetization_on_rounded,
+              iconBgColor: const Color(0xFFFFF8E1),
+              iconFgColor: const Color(0xFFFF8F00),
+              numericValue: inrPrice,
+              previousNumericValue: prev,
+            );
+            _cache[key] = model;
+            return model;
+          }
+        }
+      }
+    } catch (e) {
+      print('⚠️ CoinGecko failed: $e');
+    }
+
+    // Try metals.live as backup
+    try {
+      final uri = Uri.parse(AppConstants.goldApiUrlBackup);
+      print('🔍 Trying metals.live API (backup): $uri');
+
+      final res = await _client.get(uri).timeout(AppConstants.httpTimeout);
+      print('📊 metals.live Response: ${res.statusCode}');
+
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body);
         if (decoded is List && decoded.isNotEmpty) {
           final usdPerOz = (decoded.first['gold'] as num).toDouble();
-          final inrPer10g =
-              usdPerOz * AppConstants.fallbackUsdInr * 10 / AppConstants.troyOunceInGrams;
+          final inrPer10g = usdPerOz * AppConstants.fallbackUsdInr * 10 / AppConstants.troyOunceInGrams;
+
+          print('✅ SUCCESS from metals.live: ₹${_formatINR(inrPer10g)} per 10g');
+
           final model = RateModel(
             title: 'Gold Rate',
             value: '${_formatINR(inrPer10g)} / 10 g',
@@ -50,7 +95,12 @@ class ApiService {
           return model;
         }
       }
-    } catch (_) {}
+    } catch (e) {
+      print('⚠️ metals.live failed: $e');
+    }
+
+    // If both fail, use fallback
+    print('❌ Both APIs failed - using fallback: ₹160,000 / 10 g');
     return _cache[key] ??
         RateModel(
           title: 'Gold Rate',
@@ -154,6 +204,13 @@ class ApiService {
   }
 
   void clearExchangeCache() => _lastExchangeRates = null;
+
+  /// Public method to get all exchange rates (used by Currency Converter).
+  Future<Map<String, dynamic>?> getExchangeRates() async {
+    // Clear cache to get fresh rates
+    _lastExchangeRates = null;
+    return _fetchExchangeRates();
+  }
 
   // ── USD → INR ────────────────────────────────────────────
   Future<RateModel> getUsdInrRate() async {

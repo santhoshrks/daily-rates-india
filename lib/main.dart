@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import 'core/theme.dart';
-import 'pages/home_page.dart';
+import 'pages/app_shell.dart';
 import 'providers/rates_provider.dart';
 
 void main() {
@@ -27,7 +27,7 @@ class DailyRatesApp extends StatelessWidget {
             theme: AppTheme.light,
             darkTheme: AppTheme.dark,
             themeMode: themeProvider.mode,
-            home: const HomePage(),
+            home: const AppShell(),
           );
         },
       ),

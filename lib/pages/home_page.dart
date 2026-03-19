@@ -3,13 +3,18 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
-import '../core/theme.dart';
 import '../providers/rates_provider.dart';
-import '../widgets/error_card.dart';
 import '../widgets/loading_card.dart';
 import '../widgets/rate_card.dart';
+import '../widgets/section_header.dart';
+import '../widgets/shared_app_bar.dart';
+import '../widgets/tool_card.dart';
+import 'tools/currency_converter_page.dart';
+import 'tools/emi_calculator_page.dart';
+import 'tools/gold_value_calculator_page.dart';
+import 'tools/gst_calculator_page.dart';
 
-/// The main dashboard page.
+/// The main dashboard page — Tools section + Live Rates section.
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -54,163 +59,58 @@ class _HomePageState extends State<HomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final themeProvider = context.watch<ThemeProvider>();
-    final isDark = themeProvider.isDark;
-
     return Scaffold(
       body: Column(
         children: [
-          // ── Gradient AppBar ──────────────────────────
-          Container(
-            decoration: const BoxDecoration(gradient: AppTheme.appBarGradient),
-            child: SafeArea(
-              bottom: false,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                child: Row(
-                  children: [
-                    // Logo
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Icon(
-                        Icons.show_chart_rounded,
-                        color: Colors.white,
-                        size: 24,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Daily Rates India',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 20,
-                              fontWeight: FontWeight.w800,
-                              letterSpacing: 0.3,
-                            ),
-                          ),
-                          Text(
-                            'Live Market Dashboard',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 12,
-                              fontWeight: FontWeight.w400,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    // Dark mode
-                    _AppBarButton(
-                      icon: isDark
-                          ? Icons.light_mode_rounded
-                          : Icons.dark_mode_rounded,
-                      tooltip: isDark ? 'Light mode' : 'Dark mode',
-                      onPressed: themeProvider.toggle,
-                    ),
-                    const SizedBox(width: 8),
-                    // Refresh
-                    _AppBarButton(
-                      icon: Icons.refresh_rounded,
-                      tooltip: 'Refresh',
-                      onPressed: () =>
-                          context.read<RatesProvider>().fetchAll(),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ),
+          // ── Gradient AppBar ──
+          const SharedAppBar(),
 
-          // ── Body ─────────────────────────────────────
+          // ── Body ──
           Expanded(
             child: Consumer<RatesProvider>(
               builder: (context, provider, _) {
-                return LayoutBuilder(
-                  builder: (context, constraints) {
-                    final width = constraints.maxWidth;
-                    int crossAxisCount;
-                    double childAspectRatio;
-                    if (width >= 1100) {
-                      crossAxisCount = 4;
-                      childAspectRatio = 1.15;
-                    } else if (width >= 700) {
-                      crossAxisCount = 2;
-                      childAspectRatio = 1.4;
-                    } else {
-                      crossAxisCount = 1;
-                      childAspectRatio = 2.6;
-                    }
+                return Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 1320),
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const SizedBox(height: 20),
 
-                    return Center(
-                      child: ConstrainedBox(
-                        constraints: const BoxConstraints(maxWidth: 1320),
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 20),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              const SizedBox(height: 20),
-
-                              // ── Stats bar ────────────────────
-                              _StatsBar(
-                                refreshAgo: _refreshAgo,
-                                rateCount: provider.filteredRates.length,
-                                isLoading: provider.status == RatesStatus.loading,
-                              ),
-                              const SizedBox(height: 16),
-
-                              // ── Search bar ───────────────────
-                              SizedBox(
-                                height: 46,
-                                child: TextField(
-                                  onChanged: provider.setSearchQuery,
-                                  decoration: InputDecoration(
-                                    hintText: 'Search gold, petrol, bitcoin...',
-                                    hintStyle: TextStyle(
-                                      color: Colors.grey.shade400,
-                                      fontSize: 14,
-                                    ),
-                                    prefixIcon: Icon(
-                                      Icons.search_rounded,
-                                      size: 20,
-                                      color: Colors.grey.shade400,
-                                    ),
-                                    contentPadding:
-                                        const EdgeInsets.symmetric(horizontal: 16),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(height: 20),
-
-                              // ── Grid ─────────────────────────
-                              Expanded(
-                                child: RefreshIndicator(
-                                  onRefresh: provider.fetchAll,
-                                  color: const Color(0xFFE65100),
-                                  child: _buildGrid(
-                                    provider,
-                                    crossAxisCount,
-                                    childAspectRatio,
-                                  ),
-                                ),
-                              ),
-
-                              // ── Footer ───────────────────────
-                              _Footer(),
-                            ],
+                          // ── Welcome Banner ──
+                          _WelcomeBanner(
+                            refreshAgo: _refreshAgo,
+                            isLoading:
+                                provider.status == RatesStatus.loading,
                           ),
-                        ),
+                          const SizedBox(height: 24),
+
+                          // ── Tools Section ──
+                          const SectionHeader(
+                            title: 'Financial Tools',
+                            icon: Icons.calculate_rounded,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildToolsGrid(context),
+                          const SizedBox(height: 28),
+
+                          // ── Live Rates Section ──
+                          const SectionHeader(
+                            title: 'Live Rates',
+                            icon: Icons.show_chart_rounded,
+                          ),
+                          const SizedBox(height: 12),
+                          _buildRatesSection(provider),
+                          const SizedBox(height: 24),
+
+                          // ── Footer ──
+                          _Footer(),
+                        ],
                       ),
-                    );
-                  },
+                    ),
+                  ),
                 );
               },
             ),
@@ -220,185 +120,234 @@ class _HomePageState extends State<HomePage> {
     );
   }
 
-  Widget _buildGrid(
-    RatesProvider provider,
-    int crossAxisCount,
-    double childAspectRatio,
-  ) {
-    final delegate = SliverGridDelegateWithFixedCrossAxisCount(
-      crossAxisCount: crossAxisCount,
-      crossAxisSpacing: 14,
-      mainAxisSpacing: 14,
-      childAspectRatio: childAspectRatio,
-    );
+  Widget _buildToolsGrid(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 800 ? 4 : 2;
+        final childAspectRatio = width >= 800
+            ? 1.1
+            : width >= 500
+                ? 1.3
+                : 0.95;
 
-    switch (provider.status) {
-      case RatesStatus.loading:
-        return GridView.builder(
-          itemCount: 8,
-          gridDelegate: delegate,
-          itemBuilder: (_, _) => const LoadingCard(),
-        );
-
-      case RatesStatus.error:
-        return GridView.builder(
-          itemCount: 8,
-          gridDelegate: delegate,
-          itemBuilder: (context, _) => ErrorCard(
-            onRetry: () => provider.fetchAll(),
-          ),
-        );
-
-      case RatesStatus.loaded:
-        final items = provider.filteredRates;
-        if (items.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(Icons.search_off_rounded,
-                    size: 56, color: Colors.grey.shade300),
-                const SizedBox(height: 16),
-                Text(
-                  'No rates match "${provider.searchQuery}"',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.grey.shade400,
-                      ),
-                ),
-                const SizedBox(height: 8),
-                TextButton(
-                  onPressed: () => provider.setSearchQuery(''),
-                  child: const Text('Clear search'),
-                ),
-              ],
+        return GridView.count(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          crossAxisCount: crossAxisCount,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: childAspectRatio,
+          children: [
+            ToolCard(
+              title: 'EMI Calculator',
+              subtitle: 'Home, car & personal loan EMI',
+              icon: Icons.account_balance_rounded,
+              gradientColors: const [Color(0xFFE65100), Color(0xFFFF8F00)],
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const EmiCalculatorPage()),
+              ),
             ),
-          );
-        }
-        return GridView.builder(
-          itemCount: items.length,
-          gridDelegate: delegate,
-          itemBuilder: (_, index) => RateCard(rate: items[index]),
+            ToolCard(
+              title: 'GST Calculator',
+              subtitle: 'CGST, SGST & total GST',
+              icon: Icons.receipt_long_rounded,
+              gradientColors: const [Color(0xFF1565C0), Color(0xFF42A5F5)],
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const GstCalculatorPage()),
+              ),
+            ),
+            ToolCard(
+              title: 'Gold Value',
+              subtitle: 'Calculate gold value at live rates',
+              icon: Icons.monetization_on_rounded,
+              gradientColors: const [Color(0xFFFF8F00), Color(0xFFFFC107)],
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const GoldValueCalculatorPage()),
+              ),
+            ),
+            ToolCard(
+              title: 'Currency Converter',
+              subtitle: '24+ currencies, live rates',
+              icon: Icons.currency_exchange_rounded,
+              gradientColors: const [Color(0xFF00695C), Color(0xFF26A69A)],
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (_) => const CurrencyConverterPage()),
+              ),
+            ),
+          ],
         );
-    }
+      },
+    );
   }
-}
 
-// ── Reusable AppBar icon button ─────────────────────────────
-class _AppBarButton extends StatelessWidget {
-  const _AppBarButton({
-    required this.icon,
-    required this.tooltip,
-    required this.onPressed,
-  });
+  Widget _buildRatesSection(RatesProvider provider) {
+    if (provider.status == RatesStatus.loading) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final width = constraints.maxWidth;
+          final crossAxisCount = width >= 1100 ? 3 : (width >= 700 ? 3 : 1);
+          final childAspectRatio =
+              width >= 1100 ? 1.15 : (width >= 700 ? 1.2 : 2.6);
+          return GridView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: 3,
+            gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+              crossAxisCount: crossAxisCount,
+              crossAxisSpacing: 14,
+              mainAxisSpacing: 14,
+              childAspectRatio: childAspectRatio,
+            ),
+            itemBuilder: (_, _) => const LoadingCard(),
+          );
+        },
+      );
+    }
 
-  final IconData icon;
-  final String tooltip;
-  final VoidCallback onPressed;
+    // Show key rates: Gold, Petrol, USD/INR
+    final keyTitles = ['gold rate', 'petrol price', 'usd to inr'];
+    final keyRates = provider.rates
+        .where((r) => keyTitles.contains(r.title.toLowerCase()))
+        .toList();
 
-  @override
-  Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: Colors.white.withValues(alpha: 0.15),
-        borderRadius: BorderRadius.circular(12),
-        child: InkWell(
-          borderRadius: BorderRadius.circular(12),
-          onTap: onPressed,
-          child: Padding(
-            padding: const EdgeInsets.all(10),
-            child: Icon(icon, color: Colors.white, size: 20),
+    // If not enough key rates found, show first 3
+    final displayRates =
+        keyRates.isNotEmpty ? keyRates : provider.rates.take(3).toList();
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+        final crossAxisCount = width >= 1100 ? 3 : (width >= 700 ? 3 : 1);
+        final childAspectRatio =
+            width >= 1100 ? 1.15 : (width >= 700 ? 1.2 : 2.6);
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: displayRates.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 14,
+            mainAxisSpacing: 14,
+            childAspectRatio: childAspectRatio,
           ),
-        ),
-      ),
+          itemBuilder: (_, index) =>
+              RateCard(rate: displayRates[index]),
+        );
+      },
     );
   }
 }
 
-// ── Stats bar with live indicator ───────────────────────────
-class _StatsBar extends StatelessWidget {
-  const _StatsBar({
+// ── Welcome Banner ──
+class _WelcomeBanner extends StatelessWidget {
+  const _WelcomeBanner({
     required this.refreshAgo,
-    required this.rateCount,
     required this.isLoading,
   });
 
   final String refreshAgo;
-  final int rateCount;
   final bool isLoading;
 
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
 
-    return Row(
-      children: [
-        // Title
-        Text(
-          'Market Dashboard',
-          style: theme.textTheme.headlineSmall,
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFFE65100).withValues(alpha: 0.08),
+            const Color(0xFFFF8F00).withValues(alpha: 0.05),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
-        const Spacer(),
-
-        // Live badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: Colors.green.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(20),
-            border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 7,
-                height: 7,
-                decoration: BoxDecoration(
-                  color: isLoading ? Colors.orange : Colors.green,
-                  shape: BoxShape.circle,
-                ),
-              ),
-              const SizedBox(width: 6),
-              Text(
-                isLoading
-                    ? 'Updating...'
-                    : refreshAgo.isNotEmpty
-                        ? 'Updated $refreshAgo'
-                        : 'Live',
-                style: TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w600,
-                  color: isLoading ? Colors.orange.shade700 : Colors.green.shade700,
-                ),
-              ),
-            ],
-          ),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE65100).withValues(alpha: 0.15),
         ),
-        const SizedBox(width: 10),
-
-        // Rate count badge
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-          decoration: BoxDecoration(
-            color: theme.colorScheme.primaryContainer.withValues(alpha: 0.3),
-            borderRadius: BorderRadius.circular(20),
-          ),
-          child: Text(
-            '$rateCount rates',
-            style: TextStyle(
-              fontSize: 11,
-              fontWeight: FontWeight.w600,
-              color: theme.colorScheme.primary,
+      ),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Welcome to Daily Rates India 🇮🇳',
+                  style: theme.textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w800,
+                    fontSize: 18,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  'Your one-stop dashboard for live market rates, EMI calculator, GST calculator, gold value and currency converter.',
+                  style: theme.textTheme.bodySmall?.copyWith(
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
           ),
-        ),
-      ],
+          const SizedBox(width: 16),
+          // Live status badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: Colors.green.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: Colors.green.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 7,
+                  height: 7,
+                  decoration: BoxDecoration(
+                    color: isLoading ? Colors.orange : Colors.green,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  isLoading
+                      ? 'Updating...'
+                      : refreshAgo.isNotEmpty
+                          ? 'Updated $refreshAgo'
+                          : 'Live',
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: isLoading
+                        ? Colors.orange.shade700
+                        : Colors.green.shade700,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
 
-// ── Footer ──────────────────────────────────────────────────
+// ── Footer ──
 class _Footer extends StatelessWidget {
   @override
   Widget build(BuildContext context) {

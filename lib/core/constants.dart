@@ -6,8 +6,13 @@ class AppConstants {
   static const String appTitle = 'Daily Rates India';
 
   // ── API Endpoints ────────────────────────────────────────
+  // Gold API endpoints (trying multiple sources for reliability)
   static const String goldApiUrl =
+      'https://api.coingecko.com/api/v3/simple/price?ids=gold&vs_currencies=inr';
+
+  static const String goldApiUrlBackup =
       'https://api.metals.live/v1/spot/gold';
+
   static const String silverApiUrl =
       'https://api.metals.live/v1/spot/silver';
   static const String bitcoinApiUrl =

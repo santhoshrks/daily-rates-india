@@ -1,0 +1,77 @@
+╔════════════════════════════════════════════════════════════════════╗
+║                   WHERE TO FIND THE CONSOLE                         ║
+╚════════════════════════════════════════════════════════════════════╝
+
+┌─ YOUR WEB BROWSER (Chrome, Safari, Firefox, Edge) ─────────────────┐
+│                                                                      │
+│  https://santhoshrks.github.io/daily-rates-india/                  │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────┐    │
+│  │ Daily Rates India                                          │    │
+│  ├────────────────────────────────────────────────────────────┤    │
+│  │  [Gold Rate: ₹160,000 / 10 g]                              │    │
+│  │  [Silver Rate: ₹85,200 / kg]                               │    │
+│  │  [Other rates...]                                           │    │
+│  └────────────────────────────────────────────────────────────┘    │
+│                                                                      │
+│  ⬇️ PRESS F12 ⬇️                                                    │
+│                                                                      │
+│  ┌────────────────────────────────────────────────────────────┐    │
+│  │ Elements │ Console │ Sources │ Network │ ... (TABS)        │    │
+│  ├────────────────────────────────────────────────────────────┤    │
+│  │ CLICK HERE 👆                                              │    │
+│  │ > 🔍 Gold API Response Status: 200                         │    │
+│  │ > ✅ Gold Price: ₹175,000                                  │    │
+│  │ > (more messages...)                                        │    │
+│  │                                                             │    │
+│  │ (This is the CONSOLE - where you'll see messages)          │    │
+│  └────────────────────────────────────────────────────────────┘    │
+│                                                                      │
+└──────────────────────────────────────────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════╗
+║                    NOT IN YOUR CODE EDITOR!                        ║
+╚═════════════════════════════════════════════════���══════════════════╝
+
+❌ NOT HERE:
+   ┌─ JetBrains IDE / VS Code ──────┐
+   │ lib/                            │
+   │ android/                        │
+   │ ios/                            │
+   │ ...                             │
+   └─────────────────────────────────┘
+
+✅ HERE:
+   ┌─ Web Browser ──────���───────────┐
+   │ Open: https://github.io/...    │
+   │ Press: F12                      │
+   │ Click: Console tab              │
+   └─────────────────────────────────┘
+
+╔════════════════════════════════════════════════════════════════════╗
+║                         DO THIS RIGHT NOW:                         ║
+╚═══════════════���════════════════════════════════════════════════════╝
+
+1️⃣  Open your web browser (Chrome, Safari, Firefox, etc)
+2️⃣  Go to: https://santhoshrks.github.io/daily-rates-india/
+3️⃣  Press: F12 (or right-click → Inspect)
+4️⃣  Click: Console tab
+5️⃣  Press: F5 (refresh)
+6️⃣  Read the messages
+7️⃣  Tell me what you see!
+
+═══════════════════════════════════════════════════════════════════════
+
+MESSAGES YOU'LL SEE:
+
+✅ GOOD:
+   "Gold Price from metals.live: ₹175,000"
+
+🟡 OKAY:
+   "Gold Price from CoinGecko: ₹175,000"
+
+🔴 BAD:
+   "Both Gold APIs failed - Using Fallback: 160,000"
+
+═══════════════════════════════════════════════════════════════════════
+
