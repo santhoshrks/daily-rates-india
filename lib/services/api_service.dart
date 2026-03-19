@@ -28,32 +28,30 @@ class ApiService {
     const key = 'gold';
     final prev = _cache[key]?.numericValue;
 
-    // Try CoinGecko first (most reliable, no SSL/CORS issues)
+    // ── Strategy 1: CoinGecko tether-gold (XAUT = 1 troy ounce of gold) ──
     try {
       final uri = Uri.parse(AppConstants.goldApiUrl);
-      print('🔍 Trying CoinGecko API: $uri');
-
       final res = await _client.get(uri).timeout(AppConstants.httpTimeout);
-      print('📊 CoinGecko Response: ${res.statusCode}');
 
       if (res.statusCode == 200) {
         final decoded = jsonDecode(res.body) as Map<String, dynamic>;
-        // CoinGecko format: {"gold": {"inr": 7500000}}
-        if (decoded.containsKey('gold') && decoded['gold'] is Map) {
-          final goldData = decoded['gold'] as Map<String, dynamic>;
-          if (goldData.containsKey('inr')) {
-            final inrPrice = (goldData['inr'] as num).toDouble();
-
-            print('✅ SUCCESS from CoinGecko: ₹${_formatINR(inrPrice)} per gram');
+        // Format: {"tether-gold": {"inr": 2500000, "usd": 3000}}
+        if (decoded.containsKey('tether-gold') &&
+            decoded['tether-gold'] is Map) {
+          final data = decoded['tether-gold'] as Map<String, dynamic>;
+          if (data.containsKey('inr')) {
+            // XAUT price is per troy ounce → convert to per gram
+            final inrPerOz = (data['inr'] as num).toDouble();
+            final inrPerGram = inrPerOz / AppConstants.troyOunceInGrams;
 
             final model = RateModel(
               title: 'Gold Rate',
-              value: '${_formatINR(inrPrice)} / g',
+              value: '${_formatINR(inrPerGram)} / g',
               updatedAt: DateTime.now(),
               icon: Icons.monetization_on_rounded,
               iconBgColor: const Color(0xFFFFF8E1),
               iconFgColor: const Color(0xFFFF8F00),
-              numericValue: inrPrice,
+              numericValue: inrPerGram,
               previousNumericValue: prev,
             );
             _cache[key] = model;
@@ -61,54 +59,85 @@ class ApiService {
           }
         }
       }
-    } catch (e) {
-      print('⚠️ CoinGecko failed: $e');
-    }
+    } catch (_) {}
 
-    // Try metals.live as backup
+    // ── Strategy 2: Exchange rate API (XAU base → INR) ──
     try {
-      final uri = Uri.parse(AppConstants.goldApiUrlBackup);
-      print('🔍 Trying metals.live API (backup): $uri');
-
+      final uri = Uri.parse(AppConstants.goldExchangeApiUrl);
       final res = await _client.get(uri).timeout(AppConstants.httpTimeout);
-      print('📊 metals.live Response: ${res.statusCode}');
 
       if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-        if (decoded is List && decoded.isNotEmpty) {
-          final usdPerOz = (decoded.first['gold'] as num).toDouble();
-          final inrPer10g = usdPerOz * AppConstants.fallbackUsdInr * 10 / AppConstants.troyOunceInGrams;
-
-          print('✅ SUCCESS from metals.live: ₹${_formatINR(inrPer10g)} per 10g');
+        final decoded = jsonDecode(res.body) as Map<String, dynamic>;
+        final rates = decoded['rates'] as Map<String, dynamic>?;
+        if (rates != null && rates.containsKey('INR')) {
+          // XAU base: 1 XAU = X INR (1 troy ounce of gold in INR)
+          final inrPerOz = (rates['INR'] as num).toDouble();
+          final inrPerGram = inrPerOz / AppConstants.troyOunceInGrams;
 
           final model = RateModel(
             title: 'Gold Rate',
-            value: '${_formatINR(inrPer10g)} / 10 g',
+            value: '${_formatINR(inrPerGram)} / g',
             updatedAt: DateTime.now(),
             icon: Icons.monetization_on_rounded,
             iconBgColor: const Color(0xFFFFF8E1),
             iconFgColor: const Color(0xFFFF8F00),
-            numericValue: inrPer10g,
+            numericValue: inrPerGram,
             previousNumericValue: prev,
           );
           _cache[key] = model;
           return model;
         }
       }
-    } catch (e) {
-      print('⚠️ metals.live failed: $e');
-    }
+    } catch (_) {}
 
-    // If both fail, use fallback
-    print('❌ Both APIs failed - using fallback: ₹160,000 / 10 g');
+    // ── Strategy 3: metals.live (backup) ──
+    try {
+      final uri = Uri.parse(AppConstants.goldApiUrlBackup);
+      final res = await _client.get(uri).timeout(AppConstants.httpTimeout);
+
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is List && decoded.isNotEmpty) {
+          final usdPerOz = (decoded.first['gold'] as num).toDouble();
+
+          // Get live INR rate if available, else use fallback
+          double usdInr = AppConstants.fallbackUsdInr;
+          try {
+            final exRates = await _fetchExchangeRates();
+            if (exRates != null && exRates['INR'] != null) {
+              usdInr = (exRates['INR'] as num).toDouble();
+            }
+          } catch (_) {}
+
+          final inrPerGram =
+              usdPerOz * usdInr / AppConstants.troyOunceInGrams;
+
+          final model = RateModel(
+            title: 'Gold Rate',
+            value: '${_formatINR(inrPerGram)} / g',
+            updatedAt: DateTime.now(),
+            icon: Icons.monetization_on_rounded,
+            iconBgColor: const Color(0xFFFFF8E1),
+            iconFgColor: const Color(0xFFFF8F00),
+            numericValue: inrPerGram,
+            previousNumericValue: prev,
+          );
+          _cache[key] = model;
+          return model;
+        }
+      }
+    } catch (_) {}
+
+    // ── Fallback: estimated current gold rate per gram ──
     return _cache[key] ??
         RateModel(
           title: 'Gold Rate',
-          value: '160,000 / 10 g',
+          value: '7,200 / g',
           updatedAt: DateTime.now(),
           icon: Icons.monetization_on_rounded,
           iconBgColor: const Color(0xFFFFF8E1),
           iconFgColor: const Color(0xFFFF8F00),
+          numericValue: 7200,
         );
   }
 
@@ -116,16 +145,18 @@ class ApiService {
   Future<RateModel> getSilverPrice() async {
     const key = 'silver';
     final prev = _cache[key]?.numericValue;
+
+    // ── Strategy 1: Exchange rate API (XAG base → INR) ──
     try {
-      final uri = Uri.parse(AppConstants.silverApiUrl);
+      final uri = Uri.parse(AppConstants.silverExchangeApiUrl);
       final res = await _client.get(uri).timeout(AppConstants.httpTimeout);
       if (res.statusCode == 200) {
-        final decoded = jsonDecode(res.body);
-        if (decoded is List && decoded.isNotEmpty) {
-          final usdPerOz = (decoded.first['silver'] as num).toDouble();
-          // Silver is usually quoted per kg in India.
-          final inrPerKg =
-              usdPerOz * AppConstants.fallbackUsdInr * 1000 / AppConstants.troyOunceInGrams;
+        final decoded = jsonDecode(res.body) as Map<String, dynamic>;
+        final rates = decoded['rates'] as Map<String, dynamic>?;
+        if (rates != null && rates.containsKey('INR')) {
+          // 1 XAG (troy ounce) = X INR → convert to per kg
+          final inrPerOz = (rates['INR'] as num).toDouble();
+          final inrPerKg = inrPerOz * 1000 / AppConstants.troyOunceInGrams;
           final model = RateModel(
             title: 'Silver Rate',
             value: '${_formatINR(inrPerKg)} / kg',
@@ -141,6 +172,40 @@ class ApiService {
         }
       }
     } catch (_) {}
+
+    // ── Strategy 2: metals.live (backup) ──
+    try {
+      final uri = Uri.parse(AppConstants.silverApiUrl);
+      final res = await _client.get(uri).timeout(AppConstants.httpTimeout);
+      if (res.statusCode == 200) {
+        final decoded = jsonDecode(res.body);
+        if (decoded is List && decoded.isNotEmpty) {
+          final usdPerOz = (decoded.first['silver'] as num).toDouble();
+          double usdInr = AppConstants.fallbackUsdInr;
+          try {
+            final exRates = await _fetchExchangeRates();
+            if (exRates != null && exRates['INR'] != null) {
+              usdInr = (exRates['INR'] as num).toDouble();
+            }
+          } catch (_) {}
+          final inrPerKg =
+              usdPerOz * usdInr * 1000 / AppConstants.troyOunceInGrams;
+          final model = RateModel(
+            title: 'Silver Rate',
+            value: '${_formatINR(inrPerKg)} / kg',
+            updatedAt: DateTime.now(),
+            icon: Icons.diamond_rounded,
+            iconBgColor: const Color(0xFFECEFF1),
+            iconFgColor: const Color(0xFF546E7A),
+            numericValue: inrPerKg,
+            previousNumericValue: prev,
+          );
+          _cache[key] = model;
+          return model;
+        }
+      }
+    } catch (_) {}
+
     return _cache[key] ??
         RateModel(
           title: 'Silver Rate',
@@ -149,6 +214,7 @@ class ApiService {
           icon: Icons.diamond_rounded,
           iconBgColor: const Color(0xFFECEFF1),
           iconFgColor: const Color(0xFF546E7A),
+          numericValue: 85200,
         );
   }
 
